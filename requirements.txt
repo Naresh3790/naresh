@@ -3,5 +3,4 @@ transformers
 torch
 tensorflow
 textblob
-deepface
 pillow
