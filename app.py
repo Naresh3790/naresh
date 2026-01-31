@@ -18,16 +18,14 @@ if st.button("Analyze"):
         blob = TextBlob(text)
         polarity = blob.sentiment.polarity
         scores = analyzer.polarity_scores(text)
-
-        # ---------- SENTIMENT ----------
+        
         if polarity > 0.3:
             sentiment = "😊 Positive"
         elif polarity < -0.3:
             sentiment = "😞 Negative"
         else:
             sentiment = "😐 Neutral"
-
-        # ---------- EMOTION DETECTION ----------
+            
         emotion = "🤔 Thinking"
 
         if scores["pos"] > 0.6:
@@ -43,12 +41,4 @@ if st.button("Analyze"):
         else:
             emotion = "🤔 Thinking"
 
-        # ---------- OUTPUT ----------
-        st.success("Analysis Completed")
 
-        st.write("### 🔍 Results")
-        st.write(f"**Sentiment:** {sentiment}")
-        st.write(f"**Emotion:** {emotion}")
-
-        st.write("### 📊 Score Details")
-        st.json(scores)
