@@ -3,74 +3,116 @@ from transformers import pipeline
 from textblob import TextBlob
 from nltk.sentiment import SentimentIntensityAnalyzer
 import nltk
+from pypdf import PdfReader
+import docx
+from collections import Counter
 
 # Download VADER lexicon
-nltk.download('vader_lexicon', quiet=True)
+nltk.download("vader_lexicon", quiet=True)
 
 # Load models
-hf_model = pipeline("sentiment-analysis")
+hf_model = pipeline(
+    "sentiment-analysis",
+    model="distilbert-base-uncased-finetuned-sst-2-english"
+)
 vader = SentimentIntensityAnalyzer()
 
-# Streamlit UI
+# ---------- Helper functions ----------
+def read_txt(file):
+    return file.read().decode("utf-8")
+
+def read_pdf(file):
+    reader = PdfReader(file)
+    text = ""
+    for page in reader.pages:
+        text += page.extract_text() or ""
+    return text
+
+def read_docx(file):
+    document = docx.Document(file)
+    return "\n".join(p.text for p in document.paragraphs)
+
+# ---------- Streamlit UI ----------
 st.title("🧠 Multi-Sentiment Analyzer")
-st.write("Compare 3 models with **Positive / Neutral / Negative** labels:")
+st.write("Analyze sentiment using HuggingFace, TextBlob, and VADER")
 
-user_input = st.text_area("Enter your text:", "AI is helpful, but sometimes frustrating!")
+uploaded_file = st.file_uploader(
+    "📄 Upload a document (TXT, PDF, DOCX)",
+    type=["txt", "pdf", "docx"]
+)
 
-if st.button("Analyze"):
-    if not user_input.strip():
-        st.warning("Please enter some text.")
+user_input = st.text_area(
+    "✍️ Or enter text manually:",
+    "i am good"
+)
+
+# ---------- Text Selection ----------
+text_data = ""
+
+if uploaded_file:
+    if uploaded_file.type == "text/plain":
+        text_data = read_txt(uploaded_file)
+    elif uploaded_file.type == "application/pdf":
+        text_data = read_pdf(uploaded_file)
+    elif uploaded_file.type == "application/vnd.openxmlformats-officedocument.wordprocessingml.document":
+        text_data = read_docx(uploaded_file)
+
+    st.text_area("📃 Extracted Text", text_data, height=200)
+else:
+    text_data = user_input
+
+# ---------- Analysis ----------
+if st.button("🔍 Analyze Sentiment"):
+
+    if not text_data.strip():
+        st.warning("Please provide some text.")
     else:
         with st.spinner("Analyzing..."):
 
             # 🤗 HuggingFace
-            hf_result = hf_model(user_input)[0]
-            hf_score = hf_result['score']
-            hf_label = hf_result['label']
-
-            # Adjust label for 3-category view
-            if hf_score < 0.6:
-                hf_sentiment = "Neutral"
-            else:
-                hf_sentiment = "Positive" if hf_label == "POSITIVE" else "Negative"
+            hf = hf_model(text_data)[0]
+            hf_sentiment = (
+                "Neutral"
+                if hf["score"] < 0.6
+                else "Positive" if hf["label"] == "POSITIVE" else "Negative"
+            )
 
             # 📘 TextBlob
-            blob = TextBlob(user_input)
-            polarity = blob.sentiment.polarity
-            subjectivity = blob.sentiment.subjectivity
-            if polarity > 0.1:
-                tb_sentiment = "Positive"
-            elif polarity < -0.1:
-                tb_sentiment = "Negative"
-            else:
-                tb_sentiment = "Neutral"
+            polarity = TextBlob(text_data).sentiment.polarity
+            tb_sentiment = (
+                "Positive" if polarity > 0.1
+                else "Negative" if polarity < -0.1
+                else "Neutral"
+            )
 
             # 🔍 VADER
-            vader_scores = vader.polarity_scores(user_input)
-            compound = vader_scores["compound"]
-            if compound >= 0.05:
-                vader_sentiment = "Positive"
-            elif compound <= -0.05:
-                vader_sentiment = "Negative"
-            else:
-                vader_sentiment = "Neutral"
+            compound = vader.polarity_scores(text_data)["compound"]
+            vader_sentiment = (
+                "Positive" if compound >= 0.05
+                else "Negative" if compound <= -0.05
+                else "Neutral"
+            )
 
-               # Display results
-        st.subheader("📊 Sentiment Results")
+        # ---------- Consolidated Result ----------
+        sentiments = [hf_sentiment, tb_sentiment, vader_sentiment]
+        counts = Counter(sentiments)
 
-        col1, col2, col3 = st.columns(3)
+        final_sentiment, votes = counts.most_common(1)[0]
 
-        with col1:
-            st.markdown("**🤗 HuggingFace**")
-            st.write(f"Sentiment: `{hf_sentiment}`")
+        # If all models disagree
+        if votes == 1:
+            final_sentiment = "Neutral"
 
-        with col2:
-            st.markdown("**📘 TextBlob**")
-            st.write(f"Sentiment: `{tb_sentiment}`")
+        # ---------- Display ----------
+        st.subheader("🤖 Final Consolidated Sentiment")
 
-        with col3:
-            st.markdown("**🔍 VADER**")
-            st.write(f"Sentiment: `{vader_sentiment}`")
-#NOTE:FOR EXECUTION,FIRST"pip install streamlit transformers textblob nltk",then execute in terminal
+        if final_sentiment == "Positive":
+            st.success("POSITIVE 😊")
+        elif final_sentiment == "Negative":
+            st.error("NEGATIVE 😞")
+        else:
+            st.info("NEUTRAL 😐")
+
+        st.caption(f"Agreement: {votes}/3 models")
  
 
