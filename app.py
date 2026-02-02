@@ -72,5 +72,5 @@ if st.button("Analyze"):
             st.markdown("**🔍 VADER**")
             st.write(f"Sentiment: `{vader_sentiment}`")
 #NOTE:FOR EXECUTION,FIRST"pip install streamlit transformers textblob nltk",then execute in terminal
-
+ 
 
