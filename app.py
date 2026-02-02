@@ -33,16 +33,16 @@ def read_docx(file):
     return "\n".join(p.text for p in document.paragraphs)
 
 # ---------- Streamlit UI ----------
-st.title("🧠 Multi-Sentiment Analyzer")
+st.title(" Multi-Sentiment Analyzer")
 st.write("Analyze sentiment using HuggingFace, TextBlob, and VADER")
 
 uploaded_file = st.file_uploader(
-    "📄 Upload a document (TXT, PDF, DOCX)",
+    "Upload a document (TXT, PDF, DOCX)",
     type=["txt", "pdf", "docx"]
 )
 
 user_input = st.text_area(
-    "✍️ Or enter text manually:",
+    " Or enter text manually:",
     "i am good"
 )
 
@@ -57,19 +57,19 @@ if uploaded_file:
     elif uploaded_file.type == "application/vnd.openxmlformats-officedocument.wordprocessingml.document":
         text_data = read_docx(uploaded_file)
 
-    st.text_area("📃 Extracted Text", text_data, height=200)
+    st.text_area(" Extracted Text", text_data, height=200)
 else:
     text_data = user_input
 
 # ---------- Analysis ----------
-if st.button("🔍 Analyze Sentiment"):
+if st.button(" Analyze Sentiment"):
 
     if not text_data.strip():
         st.warning("Please provide some text.")
     else:
         with st.spinner("Analyzing..."):
 
-            # 🤗 HuggingFace
+            #  HuggingFace
             hf = hf_model(text_data)[0]
             hf_sentiment = (
                 "Neutral"
@@ -77,7 +77,7 @@ if st.button("🔍 Analyze Sentiment"):
                 else "Positive" if hf["label"] == "POSITIVE" else "Negative"
             )
 
-            # 📘 TextBlob
+            #  TextBlob
             polarity = TextBlob(text_data).sentiment.polarity
             tb_sentiment = (
                 "Positive" if polarity > 0.1
@@ -85,7 +85,7 @@ if st.button("🔍 Analyze Sentiment"):
                 else "Neutral"
             )
 
-            # 🔍 VADER
+            #  VADER
             compound = vader.polarity_scores(text_data)["compound"]
             vader_sentiment = (
                 "Positive" if compound >= 0.05
@@ -104,14 +104,14 @@ if st.button("🔍 Analyze Sentiment"):
             final_sentiment = "Neutral"
 
         # ---------- Display ----------
-        st.subheader("🤖 Final Consolidated Sentiment")
+        st.subheader(" Final Consolidated Sentiment")
 
         if final_sentiment == "Positive":
-            st.success("POSITIVE 😊")
+            st.success("POSITIVE ")
         elif final_sentiment == "Negative":
-            st.error("NEGATIVE 😞")
+            st.error("NEGATIVE ")
         else:
-            st.info("NEUTRAL 😐")
+            st.info("NEUTRAL ")
 
         st.caption(f"Agreement: {votes}/3 models")
  
