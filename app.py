@@ -3,8 +3,6 @@ from transformers import pipeline
 from textblob import TextBlob
 from nltk.sentiment import SentimentIntensityAnalyzer
 import nltk
-import docx
-from collections import Counter
 
 # Download VADER lexicon
 nltk.download("vader_lexicon", quiet=True)
