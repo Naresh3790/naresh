@@ -1,4 +1,4 @@
-import as st 
+import st 
 from transformers import pipeline
 from textblob import TextBlob
 from nltk.sentiment import SentimentIntensityAnalyzer
