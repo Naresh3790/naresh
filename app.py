@@ -66,7 +66,7 @@ if uploaded_file:
     file_type = uploaded_file.type
 
     if file_type == "text/plain":
-        text_data = read_txt(uploaded_file)
+        text_data = read_pdf( uploaded_file)
 
     elif file_type in ["application/pdf", "application/octet-stream"]:
         text_data = read_pdf(uploaded_file)
