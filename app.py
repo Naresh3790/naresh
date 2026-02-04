@@ -3,8 +3,6 @@ from transformers import pipeline
 from textblob import TextBlob
 from nltk.sentiment import SentimentIntensityAnalyzer
 import nltk
-from PyPDF2 import pdfReader  #<..important fix
-import docx
 from collections import Counter
 
 # ------------------ Setup ------------------
