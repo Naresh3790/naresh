@@ -1,4 +1,4 @@
-import st 
+import streamlit as st 
 from transformers import pipeline
 from textblob import TextBlob
 from nltk.sentiment import SentimentIntensityAnalyzer
@@ -7,7 +7,6 @@ from pypdf import PdfReader
 import docx
 from collections import Counter
 
-# ------------------ Setup ------------------
 nltk.download("vader_lexicon", quiet=True)
 
 hf_model = pipeline(
@@ -17,7 +16,6 @@ hf_model = pipeline(
 
 vader = SentimentIntensityAnalyzer()
 
-# ------------------ Helper functions ------------------
 def read_txt(file):
     return file.read().decode("utf-8")
 
@@ -32,8 +30,7 @@ def read_docx(file):
     document = docx.Document(file)
     return "\n".join(p.text for p in document.paragraphs)
 
-# ------------------ UI ------------------
-st.title("🧠 Multi-Sentiment Analyzer")
+st.title(" Multi-Sentiment Analyzer")
 st.write("Consolidated Sentiment Analysis with Additional Traits")
 
 uploaded_file = st.file_uploader(
@@ -42,11 +39,10 @@ uploaded_file = st.file_uploader(
 )
 
 user_input = st.text_area(
-    "✍️ Or enter text manually:",
+    " Or enter text manually:",
     "i am very happy today"
 )
 
-# ------------------ Text selection ------------------
 text_data = ""
 
 if uploaded_file:
@@ -61,15 +57,15 @@ if uploaded_file:
 else:
     text_data = user_input
 
-# ------------------ Analysis ------------------
-if st.button("🔍 Analyze Sentiment"):
+
+if st.button("Analyze Sentiment"):
 
     if not text_data.strip():
         st.warning("Please provide some text.")
     else:
         with st.spinner("Analyzing..."):
 
-            # 🤗 HuggingFace
+            #  HuggingFace
             hf = hf_model(text_data)[0]
             hf_sentiment = (
                 "Neutral"
@@ -77,7 +73,7 @@ if st.button("🔍 Analyze Sentiment"):
                 else "Positive" if hf["label"] == "POSITIVE" else "Negative"
             )
 
-            # 📘 TextBlob
+            #  TextBlob
             blob = TextBlob(text_data)
             polarity = blob.sentiment.polarity
             subjectivity = blob.sentiment.subjectivity
@@ -88,7 +84,7 @@ if st.button("🔍 Analyze Sentiment"):
                 else "Neutral"
             )
 
-            # 🔍 VADER
+            #  VADER
             vader_scores = vader.polarity_scores(text_data)
             compound = vader_scores["compound"]
 
@@ -98,7 +94,7 @@ if st.button("🔍 Analyze Sentiment"):
                 else "Neutral"
             )
 
-        # ------------------ Consolidation ------------------
+        
         sentiments = [hf_sentiment, tb_sentiment, vader_sentiment]
         counts = Counter(sentiments)
         final_sentiment, votes = counts.most_common(1)[0]
@@ -106,7 +102,6 @@ if st.button("🔍 Analyze Sentiment"):
         if votes == 1:
             final_sentiment = "Neutral"
 
-        # ------------------ Extra Traits ------------------
 
         # Emotion
         if compound >= 0.6:
@@ -141,17 +136,17 @@ if st.button("🔍 Analyze Sentiment"):
         else:
             strength = "Strong"
 
-        # ------------------ Display ------------------
-        st.subheader("🤖 Final Consolidated Sentiment")
+        
+        st.subheader(" Final Consolidated Sentiment")
 
         if final_sentiment == "Positive":
-            st.success("POSITIVE 😊")
+            st.success("POSITIVE ")
         elif final_sentiment == "Negative":
-            st.error("NEGATIVE 😞")
+            st.error("NEGATIVE ")
         else:
-            st.info("NEUTRAL 😐")
+            st.info("NEUTRAL ")
 
-        st.subheader("📌 Additional Sentiment Traits")
+        st.subheader(" Additional Sentiment Traits")
 
         col1, col2 = st.columns(2)
 
