@@ -3,6 +3,8 @@ from transformers import pipeline
 from textblob import TextBlob
 from nltk.sentiment import SentimentIntensityAnalyzer
 import nltk
+from pypdf import PdfReader
+import docx
 from collections import Counter
 
 # ------------------ Setup ------------------
@@ -66,10 +68,10 @@ if uploaded_file:
     file_type = uploaded_file.type
 
     if file_type == "text/plain":
-        text_data = read_pdf( uploaded_file)
+        text_data = read_txt(uploaded_file)
 
     elif file_type in ["application/pdf", "application/octet-stream"]:
-        text_data = read_txt(uploaded_file)
+        text_data = read_pdf(uploaded_file)
 
     elif file_type == "application/vnd.openxmlformats-officedocument.wordprocessingml.document":
         text_data = read_docx(uploaded_file)
