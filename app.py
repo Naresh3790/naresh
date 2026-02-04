@@ -69,7 +69,7 @@ if uploaded_file:
         text_data = read_pdf( uploaded_file)
 
     elif file_type in ["application/pdf", "application/octet-stream"]:
-        text_data = read_pdf(uploaded_file)
+        text_data = read_txt(uploaded_file)
 
     elif file_type == "application/vnd.openxmlformats-officedocument.wordprocessingml.document":
         text_data = read_docx(uploaded_file)
