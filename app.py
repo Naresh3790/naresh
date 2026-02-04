@@ -8,7 +8,10 @@ import docx
 from collections import Counter
 
 # ------------------ Setup ------------------
-nltk.download("vader_lexicon", quiet=True)
+try:
+    nltk.data.find("sentiment/vader_lexicon")
+except:
+    nltk.download("vader_lexicon")
 
 hf_model = pipeline(
     "sentiment-analysis",
@@ -19,18 +22,30 @@ vader = SentimentIntensityAnalyzer()
 
 # ------------------ Helper functions ------------------
 def read_txt(file):
-    return file.read().decode("utf-8")
+    return file.read().decode("utf-8", errors="ignore")
 
 def read_pdf(file):
     reader = PdfReader(file)
     text = ""
     for page in reader.pages:
-        text += page.extract_text() or ""
+        content = page.extract_text()
+        if content:
+            text += content
     return text
 
 def read_docx(file):
     document = docx.Document(file)
     return "\n".join(p.text for p in document.paragraphs)
+
+# HuggingFace long text safe function
+def hf_analyze(text):
+    max_len = 400
+    chunks = [text[i:i+max_len] for i in range(0, len(text), max_len)]
+    results = []
+    for chunk in chunks:
+        res = hf_model(chunk, truncation=True)[0]
+        results.append(res["label"])
+    return Counter(results).most_common(1)[0][0]
 
 # ------------------ UI ------------------
 st.title("🧠 Multi-Sentiment Analyzer")
@@ -50,11 +65,15 @@ user_input = st.text_area(
 text_data = ""
 
 if uploaded_file:
-    if uploaded_file.type == "text/plain":
+    file_type = uploaded_file.type
+
+    if file_type == "text/plain":
         text_data = read_txt(uploaded_file)
-    elif uploaded_file.type == "application/pdf":
+
+    elif file_type in ["application/pdf", "application/octet-stream"]:
         text_data = read_pdf(uploaded_file)
-    elif uploaded_file.type == "application/vnd.openxmlformats-officedocument.wordprocessingml.document":
+
+    elif file_type == "application/vnd.openxmlformats-officedocument.wordprocessingml.document":
         text_data = read_docx(uploaded_file)
 
     st.text_area("📃 Extracted Text", text_data, height=200)
@@ -70,12 +89,8 @@ if st.button("🔍 Analyze Sentiment"):
         with st.spinner("Analyzing..."):
 
             # 🤗 HuggingFace
-            hf = hf_model(text_data)[0]
-            hf_sentiment = (
-                "Neutral"
-                if hf["score"] < 0.6
-                else "Positive" if hf["label"] == "POSITIVE" else "Negative"
-            )
+            hf_label = hf_analyze(text_data)
+            hf_sentiment = "Positive" if hf_label == "POSITIVE" else "Negative"
 
             # 📘 TextBlob
             blob = TextBlob(text_data)
@@ -107,8 +122,6 @@ if st.button("🔍 Analyze Sentiment"):
             final_sentiment = "Neutral"
 
         # ------------------ Extra Traits ------------------
-
-        # Emotion
         if compound >= 0.6:
             emotion = "Joy"
         elif compound <= -0.6:
@@ -118,28 +131,14 @@ if st.button("🔍 Analyze Sentiment"):
         else:
             emotion = "Neutral"
 
-        # Subjectivity
         subjectivity_label = "Subjective" if subjectivity > 0.5 else "Objective"
 
-        # Intensity
         abs_score = abs(compound)
-        if abs_score < 0.3:
-            intensity = "Low"
-        elif abs_score < 0.6:
-            intensity = "Medium"
-        else:
-            intensity = "High"
 
-        # Confidence
+        intensity = "Low" if abs_score < 0.3 else "Medium" if abs_score < 0.6 else "High"
+        strength = "Weak" if abs_score < 0.3 else "Moderate" if abs_score < 0.6 else "Strong"
+
         confidence = int((votes / 3) * 100)
-
-        # Strength
-        if abs_score < 0.3:
-            strength = "Weak"
-        elif abs_score < 0.6:
-            strength = "Moderate"
-        else:
-            strength = "Strong"
 
         # ------------------ Display ------------------
         st.subheader("🤖 Final Consolidated Sentiment")
