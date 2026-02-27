@@ -1,0 +1,72 @@
+import streamlit as st
+import pandas as pd
+
+st.title("💰 Treasure Point")
+
+# Session storage
+if "requests" not in st.session_state:
+    st.session_state.requests = []
+
+menu = st.sidebar.selectbox("Menu", ["Register", "Request Cash", "Provide Cash", "View Matches"])
+
+# ---------------- REGISTER ----------------
+if menu == "Register":
+    st.header("User Registration")
+    name = st.text_input("Name")
+    aadhar = st.text_input("Aadhar Number")
+    location = st.text_input("Location")
+
+    if st.button("Register"):
+        st.success(f"User {name} registered successfully ✅")
+
+# ---------------- REQUEST CASH ----------------
+elif menu == "Request Cash":
+    st.header("Need Physical Cash")
+    user = st.text_input("Your Name")
+    amount = st.number_input("Amount Needed", min_value=100)
+    location = st.text_input("Your Location")
+
+    if st.button("Submit Request"):
+        st.session_state.requests.append({
+            "type": "need_cash",
+            "user": user,
+            "amount": amount,
+            "location": location
+        })
+        st.success("Request Added ✅")
+
+# ---------------- PROVIDE CASH ----------------
+elif menu == "Provide Cash":
+    st.header("Have Physical Cash & Need Online Money")
+    user = st.text_input("Your Name")
+    amount = st.number_input("Cash Available", min_value=100)
+    location = st.text_input("Your Location")
+
+    if st.button("Submit Offer"):
+        st.session_state.requests.append({
+            "type": "give_cash",
+            "user": user,
+            "amount": amount,
+            "location": location
+        })
+        st.success("Offer Added ✅")
+
+# ---------------- MATCHING ----------------
+elif menu == "View Matches":
+    st.header("Matching Users")
+
+    need_cash = [r for r in st.session_state.requests if r["type"] == "need_cash"]
+    give_cash = [r for r in st.session_state.requests if r["type"] == "give_cash"]
+
+    matches = []
+
+    for n in need_cash:
+        for g in give_cash:
+            if n["amount"] == g["amount"] and n["location"] == g["location"]:
+                matches.append((n["user"], g["user"], n["amount"], n["location"]))
+
+    if matches:
+        df = pd.DataFrame(matches, columns=["Cash Needed By", "Cash Provided By", "Amount", "Location"])
+        st.table(df)
+    else:
+        st.warning("No Matches Found ❌")
